@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Keyboard, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import PropTypes from 'prop-types';
 import {
   Container,
   Form,
@@ -20,7 +20,7 @@ import api from '../../services/api';
 
 export default class Main extends Component {
   state = {
-    newUser: {},
+    newUser: '',
     users: [],
     loading: false
   };

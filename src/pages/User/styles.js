@@ -62,7 +62,7 @@ export const Title = styled.Text.attrs({
 })`
   font-size: 15px;
   font-weight: bold;
-  color: #333;
+  color: #7159c1;
 `;
 export const Author = styled.Text`
   font-size: 13px;

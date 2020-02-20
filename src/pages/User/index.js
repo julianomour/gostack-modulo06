@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { ActivityIndicator } from 'react-native';
 import api from '../../services/api';
 
 import {
@@ -28,22 +29,50 @@ export default class User extends Component {
   };
 
   state = {
-    stars: []
+    stars: [],
+    loading: false,
+    page: 1,
+    refreshing: false
   };
 
-  // eslint-disable-next-line react/sort-comp
-  async componentDidMount() {
+  componentDidMount = () => {
+    this.loadMore();
+  };
+
+  refreshList = () => {
+    this.setState({
+      refreshing: true,
+      page: 1
+    });
+
+    this.loadMore();
+  };
+
+  loadMore = async () => {
     const { navigation } = this.props;
     const user = navigation.getParam('user');
 
-    const response = await api.get(`/users/${user.login}/starred`);
+    const { page, stars } = this.state;
 
-    this.setState({ stars: response.data });
-  }
+    this.setState({ loading: true, refreshing: false });
+
+    const response = await api.get(`/users/${user.login}/starred?page=${page}`);
+
+    this.setState({
+      stars: [...stars, ...response.data],
+      loading: false,
+      page: page + 1
+    });
+  };
+
+  handleNavigate = repo => {
+    const { navigation } = this.props;
+    navigation.navigate('WebView', { repo });
+  };
 
   render() {
     const { navigation } = this.props;
-    const { stars } = this.state;
+    const { stars, loading } = this.state;
     const user = navigation.getParam('user');
     return (
       <Container>
@@ -53,19 +82,30 @@ export default class User extends Component {
           <Bio>{user.bio}</Bio>
         </Header>
 
-        <Stars
-          data={stars}
-          keyExtractor={star => String(star.id)}
-          renderItem={({ item }) => (
-            <Starred>
-              <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
-              <Info>
-                <Title>{item.name}</Title>
-                <Author>{item.owner.login}</Author>
-              </Info>
-            </Starred>
-          )}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#7159c1" />
+        ) : (
+          <Stars
+            onEndReachedThreshold={0.2}
+            onEndReached={this.loadMore}
+            onRefresh={this.refreshList} // Função dispara quando o usuário arrasta a lista pra baixo
+            refreshing={this.state.refreshing} // Variável que armazena um estado true/false que representa se a lista está atualizando
+            // Restante das props
+            data={stars}
+            keyExtractor={star => String(star.id)}
+            renderItem={({ item }) => (
+              <Starred>
+                <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
+                <Info>
+                  <Title onPress={() => this.handleNavigate(item)}>
+                    {item.name}
+                  </Title>
+                  <Author>{item.owner.login}</Author>
+                </Info>
+              </Starred>
+            )}
+          />
+        )}
       </Container>
     );
   }
